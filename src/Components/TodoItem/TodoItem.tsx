@@ -67,7 +67,7 @@ export const TodoItem: React.FC<Props> = ({
   return (
     <div
       data-cy="Todo"
-      className={classNames('todo item-enter item-enter-active', {
+      className={classNames('todo', {
         completed: todo.completed,
       })}
       onDoubleClick={() => setEditing(true)}

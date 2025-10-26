@@ -1,32 +1,5 @@
 /* eslint-disable max-len */
 /* eslint-disable jsx-a11y/control-has-associated-label */
-// import React from 'react';
-// import { UserWarning } from './UserWarning';
-
-// const USER_ID = 0;
-
-// export const App: React.FC = () => {
-//   if (!USER_ID) {
-//     return <UserWarning />;
-//   }
-
-//   return (
-//     <section className="section container">
-//       <p className="title is-4">
-//         Copy all you need from the prev task:
-//         <br />
-//         <a href="https://github.com/mate-academy/react_todo-app-add-and-delete#react-todo-app-add-and-delete">
-//           React Todo App - Add and Delete
-//         </a>
-//       </p>
-
-//       <p className="subtitle">Styles are already copied</p>
-//     </section>
-//   );
-// };
-
-/* eslint-disable max-len */
-/* eslint-disable jsx-a11y/control-has-associated-label */
 import React, { useEffect, useState } from 'react';
 import classNames from 'classnames';
 import * as todoServise from './api/todos';
@@ -90,10 +63,12 @@ export const App: React.FC = () => {
   function addTodo(trimmedTitle: string) {
     setErrorMessage(ErrorText.Init);
     if (!trimmedTitle) {
-      return setErrorMessage(ErrorText.EmptyTitle);
+      setErrorMessage(ErrorText.EmptyTitle);
+
+      return;
     }
 
-    const tempId = 0;
+    const tempId = -1;
     const newTempTodo = {
       id: tempId,
       title: trimmedTitle,
@@ -150,7 +125,6 @@ export const App: React.FC = () => {
       })
       .catch(error => {
         setErrorMessage(ErrorText.UnableUpdate);
-        setLoadingTodoIds([]);
         throw error;
       })
       .finally(() => setLoadingTodoIds([]));
@@ -200,39 +174,33 @@ export const App: React.FC = () => {
   function handleToggleCheckboxes() {
     setErrorMessage(ErrorText.Init);
 
-    // 1. Визначаємо цільовий статус
     const activeTodos = filteredTodos.filter(todo => !todo.completed);
-    const targetCompletedStatus = activeTodos.length > 0; // true, якщо є незавершені (тобто "виконати всі"), false, якщо всі виконані (тобто "скасувати виконання всіх")
+    const targetCompletedStatus = activeTodos.length > 0;
 
-    // 2. ФІЛЬТРУЄМО завдання, які ПОТРЕБУЮТЬ зміни
     const todosToUpdate = filteredTodos.filter(
       todo => todo.completed !== targetCompletedStatus,
     );
 
-    // Якщо немає завдань для оновлення, просто виходимо
     if (todosToUpdate.length === 0) {
       setLoadingTodoIds([]);
+
       return;
     }
 
-    // 3. Створюємо новий список завдань для оновлення (з новим статусом)
     const updatedTodos = todosToUpdate.map(todo => ({
       ...todo,
       completed: targetCompletedStatus,
     }));
 
-    // 4. Встановлюємо лоадер лише для тих завдань, які оновлюються
     setLoadingTodoIds(updatedTodos.map(todo => todo.id));
 
-    // 5. Відправляємо API-запити ТІЛЬКИ для відфільтрованого списку
     const todoUpdatePromises: Promise<UpdatingResult>[] = updatedTodos.map(
       todo => {
-        // Тут ми знаємо, що стан ЗАВЖДИ має бути змінений
         return todoServise
           .updateTodo(todo)
           .then((updatedTodo): UpdatingSucces => updatedTodo)
           .catch(() => {
-            return { error: true, todo }; // Повертаємо оригінальне завдання у разі помилки
+            return { error: true, todo };
           });
       },
     );
@@ -248,36 +216,28 @@ export const App: React.FC = () => {
           setErrorMessage(ErrorText.UnableUpdate);
         }
 
-        // Оновлюємо стан: замінюємо успішно оновлені завдання і залишаємо незмінними ті, що не оновлювалися або провалилися
         setTodos(prevTodos => {
-          // Завдання, які не оновлювалися (їх статус вже був цільовим)
           const unchangedTodos = filteredTodos.filter(
             todo => todo.completed === targetCompletedStatus,
           );
 
-          // Завдання, які провалилися (їх потрібно повернути до попереднього стану)
           const failedOriginalTodos = failedUpdatingTodos.map(failedResult => {
             return (
               prevTodos.find(t => t.id === failedResult.todo.id) ||
               failedResult.todo
-            ); // Повертаємо старе, або те, яке було до спроби
+            );
           });
 
-          // Комбінуємо всі списки
           const newTodosMap = new Map();
 
-          // Додаємо успішно оновлені
           successfulUpdatingTodos.forEach(todo =>
             newTodosMap.set(todo.id, todo),
           );
 
-          // Додаємо ті, що не оновлювалися (вони вже мають правильний цільовий статус)
           unchangedTodos.forEach(todo => newTodosMap.set(todo.id, todo));
 
-          // Додаємо ті, що провалилися (їхній стан залишається попереднім)
           failedOriginalTodos.forEach(todo => newTodosMap.set(todo.id, todo));
 
-          // Збираємо кінцевий список, зберігаючи порядок оригінальних Todos
           return prevTodos.map(
             prevTodo => newTodosMap.get(prevTodo.id) || prevTodo,
           );
@@ -318,9 +278,6 @@ export const App: React.FC = () => {
           />
         )}
       </div>
-
-      {/* DON'T use conditional rendering to hide the notification */}
-      {/* Add the 'hidden' class to hide the message smoothly */}
 
       <ErrorNotification
         errorMessage={errorMessage}
